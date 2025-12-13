@@ -41,7 +41,7 @@ export default function Sidebar({ isOpen, setIsOpen, isAdmin }: SidebarProps) {
       </AnimatePresence>
 
       <aside
-        className={`fixed top-0 left-0 z-50 h-full w-72 bg-[#0a0a0a]/95 backdrop-blur-xl border-r border-white/5 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static ${
+        className={`fixed top-0 left-0 z-50 h-screen w-72 bg-[#0a0a0a]/95 backdrop-blur-xl border-r border-white/5 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
