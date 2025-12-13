@@ -31,7 +31,7 @@ export default function NotFound() {
         </div>
         
         <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">Page Not Found</h2>
-        <p className="text-gray-400 mb-8 text-sm sm:text-base">The page you are looking for doesn't exist or has been moved.</p>
+        <p className="text-gray-400 mb-8 text-sm sm:text-base">The page you are looking for doesn&apos;t exist or has been moved.</p>
         
         <Link 
           href="/dashboard"
