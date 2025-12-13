@@ -565,7 +565,7 @@ export default function KanbanBoard({ isAdmin, currentUserId }: KanbanBoardProps
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto pb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pb-4">
             {Object.values(TaskStatus).map((status) => {
               const statusTasks = getTasksByStatus(status);
               return (
