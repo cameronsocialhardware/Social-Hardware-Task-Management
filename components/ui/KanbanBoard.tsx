@@ -77,11 +77,10 @@ const formatDate = (dateString: string) => {
 };
 
 // Draggable Task Card Component
-function TaskCard({ task, onEdit, onDelete, onClick, isAdmin }: { 
+function TaskCard({ task, onEdit, onDelete, isAdmin }: { 
   task: Task; 
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
-  onClick: (task: Task) => void;
   isAdmin: boolean;
 }) {
   const {
@@ -114,7 +113,7 @@ function TaskCard({ task, onEdit, onDelete, onClick, isAdmin }: {
       className={`p-4 bg-[#111] border rounded-xl hover:border-orange-500/30 transition-all cursor-pointer group relative ${
         isDragging ? "border-orange-500/50 shadow-lg" : "border-white/5"
       }`}
-      onClick={() => onClick(task)}
+      onClick={() => onEdit(task)}
     >
       <div className="flex items-start justify-between mb-2">
         <h4 className="font-medium text-white group-hover:text-orange-500 transition-colors line-clamp-2 pr-6">
@@ -181,15 +180,13 @@ function Column({
   status, 
   tasks, 
   onEdit, 
-  onDelete, 
-  onClick,
+  onDelete,
   isAdmin
 }: { 
   status: TaskStatus; 
   tasks: Task[];
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
-  onClick: (task: Task) => void;
   isAdmin: boolean;
 }) {
   const config = statusConfig[status];
@@ -224,7 +221,6 @@ function Column({
             task={task}
             onEdit={onEdit}
             onDelete={onDelete}
-            onClick={onClick}
             isAdmin={isAdmin}
           />
         ))}
@@ -244,8 +240,6 @@ export default function KanbanBoard({ isAdmin, currentUserId }: KanbanBoardProps
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [showTaskModal, setShowTaskModal] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [formData, setFormData] = useState({
@@ -502,10 +496,6 @@ export default function KanbanBoard({ isAdmin, currentUserId }: KanbanBoardProps
     setShowModal(true);
   };
 
-  const openTaskModal = (task: Task) => {
-    setSelectedTask(task);
-    setShowTaskModal(true);
-  };
 
   const getTasksByStatus = (status: TaskStatus) => {
     return tasks.filter((task) => task.status === status);
@@ -579,7 +569,6 @@ export default function KanbanBoard({ isAdmin, currentUserId }: KanbanBoardProps
                     tasks={statusTasks}
                     onEdit={openEditModal}
                     onDelete={handleDelete}
-                    onClick={openTaskModal}
                     isAdmin={isAdmin}
                   />
                 </div>
@@ -605,7 +594,6 @@ export default function KanbanBoard({ isAdmin, currentUserId }: KanbanBoardProps
                   tasks={statusTasks}
                   onEdit={openEditModal}
                   onDelete={handleDelete}
-                  onClick={openTaskModal}
                   isAdmin={isAdmin}
                 />
               </div>
@@ -915,148 +903,6 @@ export default function KanbanBoard({ isAdmin, currentUserId }: KanbanBoardProps
         )}
       </AnimatePresence>
 
-      {/* Task Detail Modal */}
-      <AnimatePresence>
-        {showTaskModal && selectedTask && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowTaskModal(false)}
-              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-3xl bg-gradient-to-br from-[#111] to-[#0a0a0a] border border-white/10 rounded-3xl shadow-2xl shadow-black/50 max-h-[90vh] overflow-hidden flex flex-col"
-            >
-              {/* Header */}
-              <div className="px-8 pt-8 pb-6 border-b border-white/5">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-2xl font-bold text-white">{selectedTask.title}</h3>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusConfig[selectedTask.status].color}`}>
-                        {statusConfig[selectedTask.status].label}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-400">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${priorityConfig[selectedTask.priority].color}`}>
-                        {priorityConfig[selectedTask.priority].label} Priority
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setShowTaskModal(false)}
-                    className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-all flex-shrink-0"
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 overflow-y-auto custom-scrollbar px-8 py-6 space-y-6">
-                {/* Description */}
-                {selectedTask.desc && (
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
-                      <FileText size={16} className="text-blue-500" />
-                      Description
-                    </h4>
-                    <div className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl">
-                      <p className="text-white leading-relaxed">{selectedTask.desc}</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Note */}
-                {selectedTask.note && (
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
-                      <FileText size={16} className="text-yellow-500" />
-                      Note
-                    </h4>
-                    <div className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl">
-                      <p className="text-white leading-relaxed">{selectedTask.note}</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Dates */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Calendar size={18} className="text-orange-500" />
-                    <h4 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Timeline</h4>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Calendar size={14} className="text-gray-400" />
-                        <h5 className="text-xs font-medium text-gray-400 uppercase">Start Date</h5>
-                      </div>
-                      <p className="text-white font-medium">{formatDate(selectedTask.startDate)}</p>
-                    </div>
-                    <div className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Calendar size={14} className="text-gray-400" />
-                        <h5 className="text-xs font-medium text-gray-400 uppercase">Assign Date</h5>
-                      </div>
-                      <p className="text-white font-medium">{formatDate(selectedTask.assignDate)}</p>
-                    </div>
-                    <div className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Clock size={14} className="text-gray-400" />
-                        <h5 className="text-xs font-medium text-gray-400 uppercase">Expected Delivery</h5>
-                      </div>
-                      <p className="text-white font-medium">{formatDate(selectedTask.expectedDeliveryDate)}</p>
-                    </div>
-                    {selectedTask.actualDeliveryDate && (
-                      <div className="px-4 py-3 bg-green-500/10 border border-green-500/20 rounded-xl">
-                        <div className="flex items-center gap-2 mb-1">
-                          <CheckCircle2 size={14} className="text-green-400" />
-                          <h5 className="text-xs font-medium text-green-400 uppercase">Actual Delivery</h5>
-                        </div>
-                        <p className="text-white font-medium">{formatDate(selectedTask.actualDeliveryDate)}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Assignee */}
-                <div className="space-y-2">
-                  <h4 className="text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
-                    <User size={16} className="text-orange-500" />
-                    Assignee
-                  </h4>
-                  <div className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl">
-                    <p className="text-white font-medium">{selectedTask.assignee.name}</p>
-                    <p className="text-sm text-gray-400 mt-1">{selectedTask.assignee.email}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div className="px-8 py-6 border-t border-white/5 bg-white/5">
-                <div className="flex justify-end">
-                  <motion.button
-                    onClick={() => setShowTaskModal(false)}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="px-6 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl transition-all font-medium"
-                  >
-                    Close
-                  </motion.button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
