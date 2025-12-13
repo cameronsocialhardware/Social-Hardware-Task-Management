@@ -144,12 +144,6 @@ export default function LoginPage() {
                 )}
               </motion.button>
             </div>
-            
-            <div className="text-center">
-               <a href="#" className="text-xs text-gray-500 hover:text-orange-400 transition-colors">
-                 Forgot your password?
-               </a>
-            </div>
           </form>
         </div>
         
