@@ -78,9 +78,10 @@ const formatDate = (dateString: string) => {
 };
 
 // Draggable Task Card Component
-function TaskCard({ task, onEdit, onDelete, isAdmin }: { 
+function TaskCard({ task, onEdit, onView, onDelete, isAdmin }: { 
   task: Task; 
   onEdit: (task: Task) => void;
+  onView: (task: Task) => void;
   onDelete: (id: string) => void;
   isAdmin: boolean;
 }) {
@@ -114,7 +115,7 @@ function TaskCard({ task, onEdit, onDelete, isAdmin }: {
       className={`p-4 bg-[#111] border rounded-xl hover:border-orange-500/30 transition-all cursor-pointer group relative ${
         isDragging ? "border-orange-500/50 shadow-lg" : "border-white/5"
       }`}
-      onClick={() => onEdit(task)}
+      onClick={() => isAdmin ? onEdit(task) : onView(task)}
     >
       <div className="flex items-start justify-between mb-2">
         <h4 className="font-medium text-white group-hover:text-orange-500 transition-colors line-clamp-2 pr-6">
@@ -180,13 +181,15 @@ function TaskCard({ task, onEdit, onDelete, isAdmin }: {
 function Column({ 
   status, 
   tasks, 
-  onEdit, 
+  onEdit,
+  onView,
   onDelete,
   isAdmin
 }: { 
   status: TaskStatus; 
   tasks: Task[];
   onEdit: (task: Task) => void;
+  onView: (task: Task) => void;
   onDelete: (id: string) => void;
   isAdmin: boolean;
 }) {
@@ -221,6 +224,7 @@ function Column({
             key={task._id}
             task={task}
             onEdit={onEdit}
+            onView={onView}
             onDelete={onDelete}
             isAdmin={isAdmin}
           />
@@ -241,7 +245,9 @@ export default function KanbanBoard({ isAdmin, currentUserId }: KanbanBoardProps
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [viewingTask, setViewingTask] = useState<Task | null>(null);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [formData, setFormData] = useState({
     title: "",
@@ -468,6 +474,11 @@ export default function KanbanBoard({ isAdmin, currentUserId }: KanbanBoardProps
     setShowModal(true);
   };
 
+  const openViewModal = (task: Task) => {
+    setViewingTask(task);
+    setShowViewModal(true);
+  };
+
   const openEditModal = (task: Task) => {
     setEditingTask(task);
     if (isAdmin) {
@@ -615,6 +626,7 @@ export default function KanbanBoard({ isAdmin, currentUserId }: KanbanBoardProps
                     status={status}
                     tasks={statusTasks}
                     onEdit={openEditModal}
+                    onView={openViewModal}
                     onDelete={handleDelete}
                     isAdmin={isAdmin}
                   />
@@ -640,6 +652,7 @@ export default function KanbanBoard({ isAdmin, currentUserId }: KanbanBoardProps
                   status={status}
                   tasks={statusTasks}
                   onEdit={openEditModal}
+                  onView={openViewModal}
                   onDelete={handleDelete}
                   isAdmin={isAdmin}
                 />
@@ -954,6 +967,190 @@ export default function KanbanBoard({ isAdmin, currentUserId }: KanbanBoardProps
                           : "Create Task"}
                       </>
                     )}
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* View Task Modal (for regular users) */}
+      <AnimatePresence>
+        {showViewModal && viewingTask && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowViewModal(false)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-3xl bg-gradient-to-br from-[#111] to-[#0a0a0a] border border-white/10 rounded-3xl shadow-2xl shadow-black/50 max-h-[90vh] overflow-hidden flex flex-col"
+            >
+              {/* Header */}
+              <div className="px-8 pt-8 pb-6 border-b border-white/5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-2xl font-bold text-white mb-1">Task Details</h3>
+                    <p className="text-sm text-gray-400">View task information</p>
+                  </div>
+                  <button
+                    onClick={() => setShowViewModal(false)}
+                    className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-all"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto custom-scrollbar px-8 py-6">
+                <div className="space-y-6">
+                  {/* Task Title */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
+                      <FileText size={16} className="text-orange-500" />
+                      Task Title
+                    </label>
+                    <div className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white">
+                      {viewingTask.title}
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  {viewingTask.desc && (
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
+                        <FileText size={16} className="text-blue-500" />
+                        Description
+                      </label>
+                      <div className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white whitespace-pre-wrap">
+                        {viewingTask.desc}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Note */}
+                  {viewingTask.note && (
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
+                        <FileText size={16} className="text-yellow-500" />
+                        Note
+                      </label>
+                      <div className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white whitespace-pre-wrap">
+                        {viewingTask.note}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Dates Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Calendar size={18} className="text-orange-500" />
+                      <h4 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Dates</h4>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-400">Start Date</label>
+                        <div className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white">
+                          {formatDate(viewingTask.startDate)}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-400">Assign Date</label>
+                        <div className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white">
+                          {formatDate(viewingTask.assignDate)}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-400">Expected Delivery Date</label>
+                      <div className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white">
+                        {formatDate(viewingTask.expectedDeliveryDate)}
+                      </div>
+                    </div>
+                    {viewingTask.actualDeliveryDate && (
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-400">Actual Delivery Date</label>
+                        <div className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white">
+                          {formatDate(viewingTask.actualDeliveryDate)}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Assignment Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <User size={18} className="text-orange-500" />
+                      <h4 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Assignment</h4>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-400">Assignee</label>
+                      <div className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white flex items-center gap-2">
+                        <User size={16} className="text-gray-400" />
+                        {viewingTask.assignee.name || viewingTask.assignee.email}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Status & Priority Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <CheckCircle2 size={18} className="text-orange-500" />
+                      <h4 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Status & Priority</h4>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-400">Status</label>
+                        <div className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white">
+                          {statusConfig[viewingTask.status].label}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-400">Priority</label>
+                        <div className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl">
+                          <span className={`text-xs px-2 py-1 rounded-full ${priorityConfig[viewingTask.priority].color}`}>
+                            {priorityConfig[viewingTask.priority].label}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-8 py-6 border-t border-white/5 bg-white/5">
+                <div className="flex justify-end gap-3">
+                  <motion.button
+                    type="button"
+                    onClick={() => setShowViewModal(false)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="px-6 py-2.5 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-all font-medium"
+                  >
+                    Close
+                  </motion.button>
+                  <motion.button
+                    type="button"
+                    onClick={() => {
+                      setShowViewModal(false);
+                      openEditModal(viewingTask);
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="px-6 py-2.5 bg-gradient-to-r from-orange-600 to-amber-700 text-white rounded-xl hover:from-orange-500 hover:to-amber-600 transition-all font-medium shadow-lg shadow-orange-500/20 flex items-center gap-2"
+                  >
+                    <Edit2 size={18} />
+                    Add/Edit Note
                   </motion.button>
                 </div>
               </div>
