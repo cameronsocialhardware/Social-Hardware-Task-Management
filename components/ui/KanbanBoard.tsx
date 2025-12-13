@@ -211,7 +211,7 @@ function Column({
       </div>
       <div
         ref={setNodeRef}
-        className={`space-y-3 flex-1 overflow-y-auto max-h-[600px] custom-scrollbar min-h-[100px] rounded-b-xl transition-colors ${
+        className={`space-y-3 flex-1 overflow-y-auto max-h-[1500px] custom-scrollbar min-h-[100px] rounded-b-xl transition-colors ${
           isOver ? "bg-orange-500/10 border-2 border-orange-500/50 border-dashed" : ""
         }`}
       >
@@ -249,6 +249,7 @@ export default function KanbanBoard({ isAdmin, currentUserId }: KanbanBoardProps
     startDate: "",
     assignDate: "",
     expectedDeliveryDate: "",
+    actualDeliveryDate: "",
     assignee: "",
     status: TaskStatus.TODO,
     priority: TaskPriority.MEDIUM,
@@ -414,6 +415,7 @@ export default function KanbanBoard({ isAdmin, currentUserId }: KanbanBoardProps
         startDate: "",
         assignDate: "",
         expectedDeliveryDate: "",
+        actualDeliveryDate: "",
         assignee: "",
         status: TaskStatus.TODO,
         priority: TaskPriority.MEDIUM,
@@ -454,6 +456,7 @@ export default function KanbanBoard({ isAdmin, currentUserId }: KanbanBoardProps
       startDate: "",
       assignDate: "",
       expectedDeliveryDate: "",
+      actualDeliveryDate: "",
       assignee: currentUserId || "",
       status: TaskStatus.TODO,
       priority: TaskPriority.MEDIUM,
@@ -473,6 +476,7 @@ export default function KanbanBoard({ isAdmin, currentUserId }: KanbanBoardProps
         startDate: task.startDate.split("T")[0],
         assignDate: task.assignDate.split("T")[0],
         expectedDeliveryDate: task.expectedDeliveryDate.split("T")[0],
+        actualDeliveryDate: task.actualDeliveryDate ? task.actualDeliveryDate.split("T")[0] : "",
         assignee: task.assignee._id,
         status: task.status,
         priority: task.priority,
@@ -486,6 +490,7 @@ export default function KanbanBoard({ isAdmin, currentUserId }: KanbanBoardProps
         startDate: task.startDate.split("T")[0],
         assignDate: task.assignDate.split("T")[0],
         expectedDeliveryDate: task.expectedDeliveryDate.split("T")[0],
+        actualDeliveryDate: task.actualDeliveryDate ? task.actualDeliveryDate.split("T")[0] : "",
         assignee: task.assignee._id,
         status: task.status,
         priority: task.priority,
@@ -580,7 +585,7 @@ export default function KanbanBoard({ isAdmin, currentUserId }: KanbanBoardProps
           </DragOverlay>
         </DndContext>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-x-auto pb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pb-4">
           {Object.values(TaskStatus).map((status) => {
             const statusTasks = getTasksByStatus(status);
             return (
@@ -695,38 +700,38 @@ export default function KanbanBoard({ isAdmin, currentUserId }: KanbanBoardProps
                       />
                     </div>
 
-                    {/* Description and Note (Edit Mode) */}
-                    {editingTask && (
-                      <div className="grid grid-cols-1 gap-6">
-                        <div className="space-y-2">
-                          <label className="block text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
-                            <FileText size={16} className="text-blue-500" />
-                            Description
-                          </label>
-                          <textarea
-                            value={formData.desc}
-                            onChange={(e) => setFormData({ ...formData, desc: e.target.value })}
-                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
-                            placeholder="Enter task description"
-                            rows={4}
-                            disabled={!isAdmin}
-                          />
-                        </div>
+                    {/* Description */}
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
+                        <FileText size={16} className="text-blue-500" />
+                        Description
+                        <span className="text-xs font-normal text-gray-500">(Optional)</span>
+                      </label>
+                      <textarea
+                        value={formData.desc}
+                        onChange={(e) => setFormData({ ...formData, desc: e.target.value })}
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                        placeholder="Enter task description"
+                        rows={4}
+                        disabled={!!editingTask && !isAdmin}
+                      />
+                    </div>
 
-                        <div className="space-y-2">
-                          <label className="block text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
-                            <FileText size={16} className="text-yellow-500" />
-                            Note
-                            <span className="text-xs font-normal text-gray-500">(Optional)</span>
-                          </label>
-                          <textarea
-                            value={formData.note}
-                            onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all resize-none"
-                            placeholder="Additional notes"
-                            rows={3}
-                          />
-                        </div>
+                    {/* Note (Edit Mode Only) */}
+                    {editingTask && (
+                      <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
+                          <FileText size={16} className="text-yellow-500" />
+                          Note
+                          <span className="text-xs font-normal text-gray-500">(Optional)</span>
+                        </label>
+                        <textarea
+                          value={formData.note}
+                          onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+                          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all resize-none"
+                          placeholder="Additional notes"
+                          rows={3}
+                        />
                       </div>
                     )}
                   </>
@@ -780,6 +785,18 @@ export default function KanbanBoard({ isAdmin, currentUserId }: KanbanBoardProps
                           required
                           value={formData.expectedDeliveryDate}
                           onChange={(e) => setFormData({ ...formData, expectedDeliveryDate: e.target.value })}
+                          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={!!editingTask && !isAdmin}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-400">
+                          Actual Delivery Date
+                        </label>
+                        <input
+                          type="date"
+                          value={formData.actualDeliveryDate}
+                          onChange={(e) => setFormData({ ...formData, actualDeliveryDate: e.target.value })}
                           className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                           disabled={!!editingTask && !isAdmin}
                         />
