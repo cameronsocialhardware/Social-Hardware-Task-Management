@@ -74,10 +74,33 @@ export default function TeamPage() {
         throw new Error(data.error || "Something went wrong");
       }
       
-      setShowModal(false);
-      setEditingUser(null);
-      setFormData({ name: "", email: "", password: "", role: "user" });
-      fetchUsers();
+      // Store user data for CSV download (only if password was provided)
+      if (formData.password) {
+        const userData = {
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: formData.role
+        };
+        setLastCreatedUser(userData);
+        // Trigger CSV download
+        downloadCredentialsCSV(userData);
+        
+        // Keep modal open for a moment to show success message, then close
+        setTimeout(() => {
+          setShowModal(false);
+          setEditingUser(null);
+          setFormData({ name: "", email: "", password: "", role: "user" });
+          setLastCreatedUser(null);
+          fetchUsers();
+        }, 2000);
+      } else {
+        setShowModal(false);
+        setEditingUser(null);
+        setFormData({ name: "", email: "", password: "", role: "user" });
+        setLastCreatedUser(null);
+        fetchUsers();
+      }
     } catch (err: any) {
       setError(err.message);
     }
@@ -110,6 +133,7 @@ export default function TeamPage() {
       password: "", 
       role: user.role 
     });
+    setLastCreatedUser(null);
     setShowModal(true);
   };
 
@@ -123,9 +147,49 @@ export default function TeamPage() {
     setFormData({ ...formData, password });
   };
 
+  const downloadCredentialsCSV = (userData: { name: string; email: string; password: string; role: string }) => {
+    // Create CSV content
+    const headers = ["Name", "Email", "Password", "Role"];
+    const row = [
+      userData.name || "",
+      userData.email,
+      userData.password,
+      userData.role === "admin" ? "Admin" : "Member"
+    ];
+
+    // Escape values that might contain commas or quotes
+    const escapeCSV = (value: string) => {
+      if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+        return `"${value.replace(/"/g, '""')}"`;
+      }
+      return value;
+    };
+
+    const csvContent = [
+      headers.map(escapeCSV).join(","),
+      row.map(escapeCSV).join(",")
+    ].join("\n");
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute("href", url);
+    link.setAttribute("download", `user_credentials_${userData.email.replace("@", "_at_")}_${Date.now()}.csv`);
+    link.style.visibility = "hidden";
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    URL.revokeObjectURL(url);
+  };
+
   const openCreateModal = () => {
     setEditingUser(null);
     setFormData({ name: "", email: "", password: "", role: "user" });
+    setLastCreatedUser(null);
     setShowModal(true);
   };
 
@@ -269,6 +333,21 @@ export default function TeamPage() {
                       {error && (
                         <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
                           {error}
+                        </div>
+                      )}
+
+                      {lastCreatedUser && (
+                        <div className="mb-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400 text-sm flex items-center justify-between">
+                          <span>✓ Credentials CSV downloaded successfully!</span>
+                          <button
+                            type="button"
+                            onClick={() => downloadCredentialsCSV(lastCreatedUser)}
+                            className="flex items-center gap-1 text-green-400 hover:text-green-300 transition-colors px-2 py-1 hover:bg-green-500/10 rounded"
+                            title="Download CSV again"
+                          >
+                            <Download size={16} />
+                            Download Again
+                          </button>
                         </div>
                       )}
 
