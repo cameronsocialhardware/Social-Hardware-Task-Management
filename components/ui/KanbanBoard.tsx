@@ -13,7 +13,8 @@ import {
   CheckCircle2,
   FileText,
   GripVertical,
-  Loader2
+  Loader2,
+  Filter
 } from "lucide-react";
 import { TaskStatus, TaskPriority } from "@/models/Task";
 import {
@@ -257,6 +258,7 @@ export default function KanbanBoard({ isAdmin, currentUserId }: KanbanBoardProps
   const [users, setUsers] = useState<any[]>([]);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedAssigneeFilter, setSelectedAssigneeFilter] = useState<string>("");
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -503,7 +505,27 @@ export default function KanbanBoard({ isAdmin, currentUserId }: KanbanBoardProps
 
 
   const getTasksByStatus = (status: TaskStatus) => {
-    return tasks.filter((task) => task.status === status);
+    let filteredTasks = tasks.filter((task) => task.status === status);
+    
+    // Filter by assignee if selected
+    if (selectedAssigneeFilter) {
+      filteredTasks = filteredTasks.filter(
+        (task) => task.assignee._id === selectedAssigneeFilter
+      );
+    }
+    
+    return filteredTasks;
+  };
+
+  // Get unique assignees from tasks
+  const getUniqueAssignees = () => {
+    const assigneeMap = new Map<string, { _id: string; name: string; email: string }>();
+    tasks.forEach((task) => {
+      if (!assigneeMap.has(task.assignee._id)) {
+        assigneeMap.set(task.assignee._id, task.assignee);
+      }
+    });
+    return Array.from(assigneeMap.values());
   };
 
   // Helper function to render task card for drag overlay
@@ -536,21 +558,41 @@ export default function KanbanBoard({ isAdmin, currentUserId }: KanbanBoardProps
     );
   }
 
+  const uniqueAssignees = getUniqueAssignees();
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-2xl font-bold text-white">Task Board</h2>
-        {isAdmin && (
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={openCreateModal}
-            className="px-4 py-2 bg-gradient-to-r from-orange-600 to-amber-700 text-white rounded-lg hover:from-orange-500 hover:to-amber-600 flex items-center gap-2 shadow-lg shadow-orange-500/20"
-          >
-            <Plus size={18} />
-            New Task
-          </motion.button>
-        )}
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          {/* Filter Dropdown */}
+          <div className="flex items-center gap-2 flex-1 sm:flex-initial">
+            <Filter size={18} className="text-gray-400" />
+            <select
+              value={selectedAssigneeFilter}
+              onChange={(e) => setSelectedAssigneeFilter(e.target.value)}
+              className="flex-1 sm:w-[200px] px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all appearance-none cursor-pointer"
+            >
+              <option value="" className="bg-[#111]">All Team Members</option>
+              {uniqueAssignees.map((assignee) => (
+                <option key={assignee._id} value={assignee._id} className="bg-[#111]">
+                  {assignee.name || assignee.email}
+                </option>
+              ))}
+            </select>
+          </div>
+          {isAdmin && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={openCreateModal}
+              className="px-4 py-2 bg-gradient-to-r from-orange-600 to-amber-700 text-white rounded-lg hover:from-orange-500 hover:to-amber-600 flex items-center gap-2 shadow-lg shadow-orange-500/20 whitespace-nowrap"
+            >
+              <Plus size={18} />
+              New Task
+            </motion.button>
+          )}
+        </div>
       </div>
 
       {isAdmin ? (
