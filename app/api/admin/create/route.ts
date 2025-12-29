@@ -5,7 +5,7 @@ import User, { UserRole } from "@/models/User";
 
 export async function GET(request: NextRequest) {
   try {
-    const adminEmail = "ganesh@thesquirrel.tech";
+    const adminEmail = "cameron@socialhardware.in";
     const adminPassword = process.env.ADMIN_PASSWORD;
 
     if (!adminPassword) {
